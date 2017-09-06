@@ -25,4 +25,8 @@ endpoint that the javascript on the page will hit to poll for updates
 
 ### GET /pages/{foo}/admin
 
-endpoint that the creator of the page can hit to do things like delete, reset, whitelist/blacklist source TNs, etc.
+endpoint that the creator of the page can hit to do things like delete, reset, whitelist/blacklist source TNs, etc. (returns HTML with ui controls to do these things)
+
+### POST /pages/{foo}
+
+endpoint hit by the UI controls to make the changes on behalf of the user (as above)
