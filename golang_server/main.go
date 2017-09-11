@@ -50,3 +50,10 @@ func main() {
     })
     r.Run(":25550")
 }
+
+func guiServer() {
+    server := gin.Default()
+    server.StaticFile("/", "./gui.html")
+    server.run(":80")
+}
+
