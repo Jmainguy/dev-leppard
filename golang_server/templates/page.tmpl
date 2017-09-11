@@ -17,7 +17,10 @@
             //modify the DOM here to add the images
           }
         }
+        //set a timer to do this again in 30 seconds
+        window.setTimeout(downloadNewImages, 30000);
       }
+      downloadNewImages();
     </script>
 </body>
 </html>
