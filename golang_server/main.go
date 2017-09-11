@@ -26,6 +26,11 @@ type MessageJSON struct {
 }
 
 func main() {
+    callbackServer()
+    guiServer()
+}
+
+func callbackServer() {
     r := gin.Default()
     r.GET("/ping", func(c *gin.Context) {
         c.JSON(200, gin.H{
