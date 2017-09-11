@@ -1,1 +1,4 @@
-golang_server
+.godeps 
+bin
+
+.main.go.swp
