@@ -3,8 +3,9 @@ package main
 import (
     "github.com/gin-gonic/gin"
     "fmt"
-    "strings"
+    //"strings"
     "time"
+    "net/http"
 )
 
 type MessageJSON struct {
@@ -26,7 +27,9 @@ type MessageJSON struct {
 }
 
 func main() {
-    callbackServer()
+    // Start callbackServer in a go function, so it runs in sep process
+    go callbackServer()
+    // Let guiServer run as its own process, so this daemon has something that runs forever and doesnt die.
     guiServer()
 }
 
@@ -62,9 +65,9 @@ func guiServer() {
     server.POST("/pages", func(c *gin.Context) {
         c.HTML(http.StatusOK, "templates/pages.tmpl", gin.H{
             "pageId": "foo",//TODO code to generate ID
-            "phoneNumber": "+12223334444"//TODO code to order a number
+            "phoneNumber": "+12223334444",//TODO code to order a number
         })
     })
-    server.run(":80")
+    server.Run(":80")
 }
 
