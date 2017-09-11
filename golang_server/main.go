@@ -68,6 +68,12 @@ func guiServer() {
             "phoneNumber": "+12223334444",//TODO code to order a number
         })
     })
+    server.GET("/pages/:pageId", func(c *gin.Context) {
+        pageId := c.param("pageId")
+        c.HTML(http.StatusOK, "templates/page.tmpl", gin.H{
+            "pageId": pageId
+        })
+    })
     server.Run(":80")
 }
 
