@@ -5,7 +5,7 @@
       function downloadNewImages() {
         window.xhr = new XMLHttpRequest();
         window.xhr.onreadystatechange = addImagesToCollection;
-        window.xhr.open("GET", "http://disrupt.soh.re/pages/{{pageId}}/updates");
+        window.xhr.open("GET", "http://disrupt.soh.re:25551/pages/{{pageId}}/updates");
         window.xhr.send();
       }
 
