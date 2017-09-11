@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>Messentation, by Dev Leppard</title>
+</head>
+<body>
+    <script language="javascript">
+      var xhr;
+      function downloadNewImages() {
+        xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = addImagesToCollection;
+        xhr.open("GET", "insert.url.here/pages/{{pageId}}/updates");
+        xhr.send();
+      }
+      function addImagesToCollection() {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            //modify the DOM here to add the images
+          }
+        }
+      }
+    </script>
+</body>
+</html>
