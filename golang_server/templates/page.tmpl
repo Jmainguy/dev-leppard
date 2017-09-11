@@ -1,26 +1,35 @@
 <html>
 <head>
 <title>Messentation, by Dev Leppard</title>
-</head>
-<body>
     <script language="javascript">
-      var xhr;
       function downloadNewImages() {
-        xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = addImagesToCollection;
-        xhr.open("GET", "insert.url.here/pages/{{pageId}}/updates");
-        xhr.send();
+        window.xhr = new XMLHttpRequest();
+        window.xhr.onreadystatechange = addImagesToCollection;
+        window.xhr.open("GET", "http://disrupt.soh.re/pages/{{pageId}}/updates");
+        window.xhr.send();
       }
+
       function addImagesToCollection() {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-          if (xhr.status === 200) {
-            //modify the DOM here to add the images
+        if (window.xhr.readyState === XMLHttpRequest.DONE) {
+          if (window.xhr.status === 200) {
+            var imagesJson = JSON.parse(window.xhr.responseText);
+            imagesJson.map(function(e, i, a) {
+              var imageElement = document.createElement("img");
+              imageElement.setAttribute("src", e);
+              window.imagesDiv.appendChild(imageElement);
+            });
           }
         }
-        //set a timer to do this again in 30 seconds
         window.setTimeout(downloadNewImages, 30000);
       }
-      downloadNewImages();
+
+      function initDocument() {
+        window.imagesDiv = document.getElementById("imageWindow");
+        downloadNewImages();
+      }
     </script>
+</head>
+<body onLoad="initDocument()">
+    <div id="imageWindow"></div>
 </body>
 </html>
