@@ -8,7 +8,7 @@ import (
     "net/http"
 )
 
-type MessageJSON struct {
+type MessageJSON []struct {
     Type        string    `json:"type"`
     Time        time.Time `json:"time"`
     Description string    `json:"description"`
@@ -44,17 +44,18 @@ func callbackServer() {
         var json MessageJSON
         c.Bind(&json)
 
+        bjson := json[0]
         //check the 'to' number in the json
-        fmt.Println(json.To)
+        fmt.Println(bjson.To)
 
         //find the page ID associated with that 'to' number
 
         //check the media urls in the json
-        fmt.Println(json.Message.Media)
+        fmt.Println(bjson.Message.Media)
 
         //update the content on that page with the media
 
-        c.JSON(200, json)
+        c.JSON(200, bjson)
     })
     r.Run(":25550")
 }
@@ -74,6 +75,6 @@ func guiServer() {
             "pageId": pageId
         })
     })
-    server.Run(":80")
+    server.Run(":25551")
 }
 
