@@ -53,7 +53,13 @@ func main() {
 
 func guiServer() {
     server := gin.Default()
-    server.StaticFile("/", "./gui.html")
+    server.StaticFile("/", "templates/gui.html")
+    server.POST("/pages", func(c *gin.Context) {
+        c.HTML(http.StatusOK, "templates/pages.tmpl", gin.H{
+            "pageId": "foo",//TODO code to generate ID
+            "phoneNumber": "+12223334444"//TODO code to order a number
+        })
+    })
     server.run(":80")
 }
 

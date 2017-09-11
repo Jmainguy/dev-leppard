@@ -1,3 +1,4 @@
 .godeps 
 bin
 
+.main.go.swp
