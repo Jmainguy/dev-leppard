@@ -53,7 +53,7 @@ func callbackServer() {
         //check the media urls in the json
         fmt.Println(bjson.Message.Media)
 
-        //update the content on that page with the media
+        //add the media URLs to the database record for the page
 
         c.JSON(200, bjson)
     })
@@ -75,6 +75,17 @@ func guiServer() {
             "pageId": pageId
         })
     })
+    server.GET("/pages/:pageId/updates", func (c *gin.Context) {
+        pageId := c.param("pageId")
+        newUrls := getNewImages(pageId)
+        c.JSON(http.StatusOK, newUrls)
+    })
     server.Run(":25551")
+}
+
+func getNewImages(pageId string) []string {
+    return []string{"example.com/image.jpg"}
+    //TODO get the updates from the database
+    //TODO in the same database transaction, clear the updates so we don't get duplicates
 }
 
