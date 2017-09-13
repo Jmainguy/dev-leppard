@@ -3,9 +3,10 @@ package main
 import (
     "github.com/gin-gonic/gin"
     "fmt"
-    //"strings"
+    "strings"
     "time"
     "net/http"
+    "gopkg.in/mgo.v2"
 )
 
 type MessageJSON []struct {
@@ -34,29 +35,65 @@ func main() {
 }
 
 func callbackServer() {
-    r := gin.Default()
-    r.GET("/ping", func(c *gin.Context) {
-        c.JSON(200, gin.H{
-            "message": "pong",
-        })
-    })
-    r.POST("/messages", func(c *gin.Context) {
-        var json MessageJSON
-        c.Bind(&json)
+    // Read Config, load values
+    _, token, secret, mongo_db, mongo_addr := config()
 
-        bjson := json[0]
+    // Open mongodb connection
+    mongoDBDialInfo := &mgo.DialInfo{
+        Addrs:    []string{mongo_addr},
+        Timeout:  60 * time.Second,
+    }
+
+    // Create a session which maintains a pool of socket connections
+    // to our MongoDB.
+    mongoSession, err := mgo.DialWithInfo(mongoDBDialInfo)
+    check(err)
+
+    // Start gin-gonic webserver
+    r := gin.Default()
+    r.POST("/messages", func(c *gin.Context) {
+        var newjson MessageJSON
+        c.Bind(&newjson)
+
+        bjson := newjson[0]
         //check the 'to' number in the json
         fmt.Println(bjson.To)
 
         //find the page ID associated with that 'to' number
 
-        //check the media urls in the json
-        fmt.Println(bjson.Message.Media)
+        // Save media
+        for url, _ := range bjson.Message.Media {
 
+            media := bjson.Message.Media[url]
+            if strings.HasSuffix(media, "txt") {
+                continue
+            } else if strings.HasSuffix(media, "smil") {
+                continue
+            } else {
+                imageUrl := saveMedia(token, secret, bjson.Message.Media[url])
+                fmt.Println(imageUrl)
+                // Mongodb stuff below
+                values := make(map[string]interface{})
+                values["pageID"] = "Jonboy"
+                values["new"] = true
+                values["time"] = &bjson.Time
+                values["from"] = &bjson.Message.From
+                values["owner"] = &bjson.Message.Owner
+                values["text"] = &bjson.Message.Text
+                values["url"] = imageUrl
+                sessionCopy := mongoSession.Copy()
+                coll := sessionCopy.DB(mongo_db).C("numbers")
+                err = coll.Insert(values)
+                check(err)
+                sessionCopy.Close()
+            }
+        }
         //update the content on that page with the media
 
         c.JSON(200, bjson)
     })
+
+    // Run on port 25550
     r.Run(":25550")
 }
 
@@ -70,9 +107,9 @@ func guiServer() {
         })
     })
     server.GET("/pages/:pageId", func(c *gin.Context) {
-        pageId := c.param("pageId")
+        pageId := c.Param("pageId")
         c.HTML(http.StatusOK, "templates/page.tmpl", gin.H{
-            "pageId": pageId
+            "pageId": pageId,
         })
     })
     server.Run(":25551")
