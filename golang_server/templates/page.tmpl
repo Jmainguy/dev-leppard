@@ -1,0 +1,35 @@
+<html>
+<head>
+<title>Messentation, by Dev Leppard</title>
+<script language="javascript">
+  function downloadNewImages() {
+    window.xhr = new XMLHttpRequest();
+    window.xhr.onreadystatechange = addImagesToCollection;
+    window.xhr.open("GET", "http://disrupt.soh.re:25551/pages/{{pageId}}/updates");
+    window.xhr.send();
+  }
+
+  function addImagesToCollection() {
+    if (window.xhr.readyState === XMLHttpRequest.DONE) {
+      if (window.xhr.status === 200) {
+        var imagesJson = JSON.parse(window.xhr.responseText);
+        imagesJson.map(function(e, i, a) {
+          var imageElement = document.createElement("img");
+          imageElement.setAttribute("src", e);
+          window.imagesDiv.appendChild(imageElement);
+        });
+      }
+      window.setTimeout(downloadNewImages, 30000);
+    }
+  }
+
+  function initDocument() {
+    window.imagesDiv = document.getElementById("imageWindow");
+    downloadNewImages();
+  }
+</script>
+</head>
+<body onLoad="initDocument()">
+    <div id="imageWindow"></div>
+</body>
+</html>
