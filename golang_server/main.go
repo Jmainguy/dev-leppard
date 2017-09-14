@@ -2,53 +2,30 @@ package main
 
 import (
     "github.com/gin-gonic/gin"
-    "fmt"
     "strings"
     "time"
     "net/http"
     "gopkg.in/mgo.v2"
 )
 
-type MessageJSON []struct {
-    Type        string    `json:"type"`
-    Time        time.Time `json:"time"`
-    Description string    `json:"description"`
-    To          string    `json:"to"`
-    Message     struct {
-        ID            string    `json:"id"`
-        Time          time.Time `json:"time"`
-        To            []string  `json:"to"`
-        From          string    `json:"from"`
-        Text          string    `json:"text"`
-        ApplicationID string    `json:"applicationId"`
-        Media         []string  `json:"media"`
-        Owner         string    `json:"owner"`
-        Direction     string    `json:"direction"`
-    } `json:"message"`
-}
-
 func main() {
-    // Start callbackServer in a go function, so it runs in sep process
-    go callbackServer()
-    // Let guiServer run as its own process, so this daemon has something that runs forever and doesnt die.
-    guiServer()
-}
-
-func callbackServer() {
     // Read Config, load values
-    _, token, secret, mongo_db, mongo_addr := config()
-
+    user, token, secret, mongo_db, mongo_addr, appId := config()
     // Open mongodb connection
     mongoDBDialInfo := &mgo.DialInfo{
         Addrs:    []string{mongo_addr},
         Timeout:  60 * time.Second,
     }
-
-    // Create a session which maintains a pool of socket connections
-    // to our MongoDB.
+    // Open and maintain pool of sessions
     mongoSession, err := mgo.DialWithInfo(mongoDBDialInfo)
     check(err)
+    // Start callbackServer in a go function, so it runs in sep process
+    go callbackServer(mongoSession, token, secret, mongo_db)
+    // Let guiServer run as its own process, so this daemon has something that runs forever and doesnt die.
+    guiServer(mongoSession, token, secret, mongo_db, user, appId)
+}
 
+func callbackServer(mongoSession *mgo.Session, token, secret, mongo_db string) {
     // Start gin-gonic webserver
     r := gin.Default()
     r.POST("/messages", func(c *gin.Context) {
@@ -56,10 +33,8 @@ func callbackServer() {
         c.Bind(&newjson)
 
         bjson := newjson[0]
-        //check the 'to' number in the json
-        fmt.Println(bjson.To)
-
         //find the page ID associated with that 'to' number
+        // Query db for pageid based on from
 
         // Save media
         for url, _ := range bjson.Message.Media {
@@ -71,21 +46,16 @@ func callbackServer() {
                 continue
             } else {
                 imageUrl := saveMedia(token, secret, bjson.Message.Media[url])
-                fmt.Println(imageUrl)
                 // Mongodb stuff below
                 values := make(map[string]interface{})
-                values["pageID"] = "Jonboy"
-                values["new"] = true
                 values["time"] = &bjson.Time
                 values["from"] = &bjson.Message.From
                 values["owner"] = &bjson.Message.Owner
                 values["text"] = &bjson.Message.Text
                 values["url"] = imageUrl
-                sessionCopy := mongoSession.Copy()
-                coll := sessionCopy.DB(mongo_db).C("numbers")
-                err = coll.Insert(values)
-                check(err)
-                sessionCopy.Close()
+                //values["pageId"] = pageId
+                values["pageId"] = "Jon"
+                insertMessage(mongoSession, mongo_db, values)
             }
         }
         //update the content on that page with the media
@@ -97,13 +67,20 @@ func callbackServer() {
     r.Run(":25550")
 }
 
-func guiServer() {
+func guiServer(mongoSession *mgo.Session, token, secret, mongo_db, user, appId string) {
     server := gin.Default()
+    server.Static("/images", "/opt/messentation/images/")
     server.StaticFile("/", "templates/gui.html")
     server.POST("/pages", func(c *gin.Context) {
+        //phoneNumber, numberId := orderNumber(token, secret)
+        phoneNumber := "+19104270915"
+        numberId := "n-gcqjn32ctbr2k7lfuxky6va"
+        assignNumber(user, token, secret, phoneNumber, appId, numberId)
+        pageId := randomString(10)
+        mapPageToNumber(mongoSession, mongo_db, phoneNumber, pageId, numberId)
         c.HTML(http.StatusOK, "templates/pages.tmpl", gin.H{
-            "pageId": "foo",//TODO code to generate ID
-            "phoneNumber": "+12223334444",//TODO code to order a number
+            "pageId": pageId,
+            "phoneNumber": phoneNumber,
         })
     })
     server.GET("/pages/:pageId", func(c *gin.Context) {
